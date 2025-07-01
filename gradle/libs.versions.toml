@@ -1,0 +1,13 @@
+[versions]
+jetbrainsKotlinJvm = "2.0.21"
+asm = "9.6"
+okio = "3.14.0"
+
+[libraries]
+asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-commons = { group = "org.ow2.asm", name = "asm-commons", version.ref = "asm" }
+okio = {group = "com.squareup.okio", name = "okio", version.ref = "okio"}
+
+[plugins]
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+
