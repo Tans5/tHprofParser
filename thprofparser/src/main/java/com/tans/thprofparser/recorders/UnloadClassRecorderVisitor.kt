@@ -1,19 +1,22 @@
 package com.tans.thprofparser.recorders
 
-import com.tans.thprofparser.HprofHeader
 
-open class UnloadClassRecorderVisitor(
-    override val tag: Int,
-    override val timeStamp: Long,
-    override val header: HprofHeader,
-    protected val nextVisitor: UnloadClassRecorderVisitor? = null
-) : BaseRecorderVisitor() {
+open class UnloadClassRecorderVisitor(protected val nextVisitor: UnloadClassRecorderVisitor? = null) {
 
-    open fun visitUnloadClassRecorder(classSerialNumber: Long) {
-        nextVisitor?.visitUnloadClassRecorder(classSerialNumber)
+    private var unloadClassContext: UnloadClassContext? = null
+
+    open fun visitUnloadClassRecorder(unloadClassContext: UnloadClassContext) {
+        this.unloadClassContext
     }
 
     open fun visitEnd() {
         nextVisitor?.visitEnd()
+    }
+
+    companion object {
+        data class UnloadClassContext(
+            val recorderContext: RecorderContext,
+            val classSerialNumber: Long
+        )
     }
 }

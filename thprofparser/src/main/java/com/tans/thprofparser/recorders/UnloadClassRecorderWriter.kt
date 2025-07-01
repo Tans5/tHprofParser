@@ -1,32 +1,27 @@
 package com.tans.thprofparser.recorders
 
-import com.tans.thprofparser.HprofHeader
-import com.tans.thprofparser.HprofParserException
+import com.tans.thprofparser.recorders.UnloadClassRecorderVisitor.Companion.UnloadClassContext
 import com.tans.thprofparser.writeUnsignedByte
 import com.tans.thprofparser.writeUnsignedInt
 import okio.BufferedSink
 
-internal class UnloadClassRecorderWriter(
-    tag: Int,
-    timeStamp: Long,
-    header: HprofHeader,
-    private val sink: BufferedSink
-) : UnloadClassRecorderVisitor(tag, timeStamp, header) {
+internal class UnloadClassRecorderWriter(private val sink: BufferedSink) : UnloadClassRecorderVisitor() {
 
-    private var classSerialNumber: Long? = null
+    private var unloadClassContext: UnloadClassContext? = null
 
-    override fun visitUnloadClassRecorder(classSerialNumber: Long) {
-        this.classSerialNumber = classSerialNumber
+    override fun visitUnloadClassRecorder(unloadClassContext: UnloadClassContext) {
+        this.unloadClassContext = unloadClassContext
     }
 
     override fun visitEnd() {
-        val classSerialNumber = this.classSerialNumber
-        if (classSerialNumber == null) {
-            throw HprofParserException("Do not invoke visitUnloadClassRecorder() method.")
+        val unloadClassContext = this.unloadClassContext
+        if (unloadClassContext == null) {
+            return
         }
-        sink.writeUnsignedByte(tag)
-        sink.writeUnsignedInt(timeStamp)
+        val recorderContext = unloadClassContext.recorderContext
+        sink.writeUnsignedByte(recorderContext.tag)
+        sink.writeUnsignedInt(recorderContext.timestamp)
         sink.writeUnsignedInt(4)
-        sink.writeUnsignedInt(classSerialNumber)
+        sink.writeUnsignedInt(unloadClassContext.classSerialNumber)
     }
 }

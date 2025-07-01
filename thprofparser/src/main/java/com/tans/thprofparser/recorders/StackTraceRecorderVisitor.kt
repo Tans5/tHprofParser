@@ -1,22 +1,24 @@
 package com.tans.thprofparser.recorders
 
-import com.tans.thprofparser.HprofHeader
-
-open class StackTraceRecorderVisitor(
-    override val tag: Int,
-    override val timeStamp: Long,
-    override val header: HprofHeader,
-    protected val nextVisitor: StackTraceRecorderVisitor? = null) : BaseRecorderVisitor() {
+open class StackTraceRecorderVisitor(protected val nextVisitor: StackTraceRecorderVisitor? = null) {
 
     open fun visitStackTrace(
-        stackTraceSerialNumber: Long,
-        threadSerialNumber: Long,
-        stackFrameIds: List<Long>
+        stackTraceContext: StackTraceContext
     ) {
-        nextVisitor?.visitStackTrace(stackTraceSerialNumber, threadSerialNumber, stackFrameIds)
+        nextVisitor?.visitStackTrace(stackTraceContext)
     }
 
     open fun visitEnd() {
         nextVisitor?.visitEnd()
+    }
+
+    companion object {
+
+        data class StackTraceContext(
+            val recorderContext: RecorderContext,
+            val stackTraceSerialNumber: Long,
+            val threadSerialNumber: Long,
+            val stackFrameIds: List<Long>
+        )
     }
 }

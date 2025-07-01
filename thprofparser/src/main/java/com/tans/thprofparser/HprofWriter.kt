@@ -2,6 +2,7 @@ package com.tans.thprofparser
 
 import com.tans.thprofparser.recorders.LoadClassRecorderVisitor
 import com.tans.thprofparser.recorders.LoadClassRecorderWriter
+import com.tans.thprofparser.recorders.RecorderContext
 import com.tans.thprofparser.recorders.RecorderType
 import com.tans.thprofparser.recorders.StackFrameRecorderVisitor
 import com.tans.thprofparser.recorders.StackFrameRecorderWriter
@@ -29,81 +30,39 @@ class HprofWriter(outputStream: OutputStream) : HprofVisitor() {
     }
 
     override fun visitStringRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): StringRecorderVisitor? {
-        return StringRecorderWriter(
-            tag = tag,
-            timeStamp = timeStamp,
-            header = header,
-            sink = sink
-        )
+        return StringRecorderWriter(sink)
     }
 
     override fun visitLoadClassRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): LoadClassRecorderVisitor? {
-        return LoadClassRecorderWriter(
-            tag = tag,
-            timeStamp = timeStamp,
-            header = header,
-            sink = sink
-        )
+        return LoadClassRecorderWriter(sink)
     }
 
     override fun visitUnloadClassRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): UnloadClassRecorderVisitor? {
-        return UnloadClassRecorderWriter(
-            tag = tag,
-            timeStamp = timeStamp,
-            header = header,
-            sink = sink
-        )
+        return UnloadClassRecorderWriter(sink)
     }
 
     override fun visitStackFrameRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): StackFrameRecorderVisitor? {
-        return StackFrameRecorderWriter(
-            tag = tag,
-            timeStamp = timeStamp,
-            header = header,
-            sink = sink
-        )
+        return StackFrameRecorderWriter(sink)
     }
 
     override fun visitStackTraceRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): StackTraceRecorderVisitor? {
-        return StackTraceRecorderWriter(
-            tag = tag,
-            timeStamp = timeStamp,
-            header = header,
-            sink = sink
-        )
+        return StackTraceRecorderWriter(sink)
     }
 
     override fun visitUnknownRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): UnknownRecorderVisitor? {
-        return UnknownRecorderWriter(
-            tag = tag,
-            timeStamp = timeStamp,
-            header = header,
-            sink = sink
-        )
+        return UnknownRecorderWriter(sink)
     }
 
 
@@ -111,5 +70,6 @@ class HprofWriter(outputStream: OutputStream) : HprofVisitor() {
         sink.writeUnsignedByte(RecorderType.HEAP_DUMP_END.tag)
         sink.writeUnsignedInt(0L)
         sink.writeUnsignedInt(0L)
+        sink.flush()
     }
 }

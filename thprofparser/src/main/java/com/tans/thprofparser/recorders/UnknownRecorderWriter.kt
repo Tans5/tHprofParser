@@ -1,32 +1,30 @@
 package com.tans.thprofparser.recorders
 
-import com.tans.thprofparser.HprofHeader
-import com.tans.thprofparser.HprofParserException
+import com.tans.thprofparser.recorders.UnknownRecorderVisitor.Companion.UnknownBodyContext
 import com.tans.thprofparser.writeUnsignedByte
 import com.tans.thprofparser.writeUnsignedInt
 import okio.BufferedSink
 
 internal class UnknownRecorderWriter(
-    tag: Int,
-    timeStamp: Long,
-    header: HprofHeader,
     private val sink: BufferedSink
-) : UnknownRecorderVisitor(tag, timeStamp, header) {
+) : UnknownRecorderVisitor() {
 
-    private var body: ByteArray? = null
+    private var unknownBodyContext: UnknownBodyContext? = null
 
-    override fun visitBody(body: ByteArray) {
-        this.body = body
+    override fun visitBody(unknownBodyContext: UnknownBodyContext) {
+        this.unknownBodyContext = unknownBodyContext
     }
 
     override fun visitEnd() {
-        val body: ByteArray? = this.body
-        if (body == null) {
-            throw HprofParserException("Do not invoke visitBody() method.")
+        val unknownBodyContext = this.unknownBodyContext
+        if (unknownBodyContext == null) {
+            return
         }
-        sink.writeUnsignedByte(tag)
-        sink.writeUnsignedInt(timeStamp)
-        sink.writeUnsignedInt(body.size.toLong())
-        sink.write(body)
+        val recorderContext = unknownBodyContext.recorderContext
+        sink.writeUnsignedByte(recorderContext.tag)
+        sink.writeUnsignedInt(recorderContext.timestamp)
+        sink.writeUnsignedInt(unknownBodyContext.body.size.toLong())
+        sink.write(unknownBodyContext.body)
+        sink.flush()
     }
 }

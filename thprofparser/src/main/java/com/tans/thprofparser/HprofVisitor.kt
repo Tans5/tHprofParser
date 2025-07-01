@@ -1,6 +1,7 @@
 package com.tans.thprofparser
 
 import com.tans.thprofparser.recorders.LoadClassRecorderVisitor
+import com.tans.thprofparser.recorders.RecorderContext
 import com.tans.thprofparser.recorders.StackFrameRecorderVisitor
 import com.tans.thprofparser.recorders.StackTraceRecorderVisitor
 import com.tans.thprofparser.recorders.StringRecorderVisitor
@@ -13,51 +14,38 @@ open class HprofVisitor(protected val nextVisitor: HprofVisitor? = null) {
         nextVisitor?.visit(header)
     }
 
-    open fun visitStringRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader): StringRecorderVisitor? {
-        return nextVisitor?.visitStringRecorder(tag, timeStamp, header)
+    open fun visitStringRecorder(recorderContext: RecorderContext): StringRecorderVisitor? {
+        return nextVisitor?.visitStringRecorder(recorderContext)
     }
 
     open fun visitLoadClassRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ) : LoadClassRecorderVisitor? {
-        return nextVisitor?.visitLoadClassRecorder(tag, timeStamp, header)
+        return nextVisitor?.visitLoadClassRecorder(recorderContext)
     }
 
     open fun visitUnloadClassRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ) : UnloadClassRecorderVisitor? {
-        return nextVisitor?.visitUnloadClassRecorder(tag, timeStamp, header)
+        return nextVisitor?.visitUnloadClassRecorder(recorderContext)
     }
 
     open fun visitStackFrameRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): StackFrameRecorderVisitor? {
-        return nextVisitor?.visitStackFrameRecorder(tag, timeStamp, header)
+        return nextVisitor?.visitStackFrameRecorder(recorderContext)
     }
 
     open fun visitStackTraceRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): StackTraceRecorderVisitor? {
-        return nextVisitor?.visitStackTraceRecorder(tag, timeStamp, header)
+        return nextVisitor?.visitStackTraceRecorder(recorderContext)
     }
 
     open fun visitUnknownRecorder(
-        tag: Int,
-        timeStamp: Long,
-        header: HprofHeader
+        recorderContext: RecorderContext
     ): UnknownRecorderVisitor? {
-        return nextVisitor?.visitUnknownRecorder(tag, timeStamp, header)
+        return nextVisitor?.visitUnknownRecorder(recorderContext)
     }
 
     open fun visitEnd() {
