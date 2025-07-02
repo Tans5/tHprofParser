@@ -1,16 +1,25 @@
 package com.tans.thprofparser
 
-import com.tans.thprofparser.recorders.LoadClassRecorderVisitor
-import com.tans.thprofparser.recorders.RecorderContext
-import com.tans.thprofparser.recorders.RecorderType
-import com.tans.thprofparser.recorders.StackFrameRecorderVisitor
-import com.tans.thprofparser.recorders.StackTraceRecorderVisitor
-import com.tans.thprofparser.recorders.StringRecorderVisitor
-import com.tans.thprofparser.recorders.UnknownRecorderVisitor
-import com.tans.thprofparser.recorders.UnloadClassRecorderVisitor
+import com.tans.thprofparser.records.HeapDumpContext
+import com.tans.thprofparser.records.LoadClassContext
+import com.tans.thprofparser.records.RecordContext
+import com.tans.thprofparser.records.RecordType
+import com.tans.thprofparser.records.StackFrameContext
+import com.tans.thprofparser.records.StackTraceContext
+import com.tans.thprofparser.records.StringContext
+import com.tans.thprofparser.records.UnknownContext
+import com.tans.thprofparser.records.UnloadClassContext
+import com.tans.thprofparser.records.subrecorders.FrameRootContext
+import com.tans.thprofparser.records.subrecorders.HeapDumpInfoContext
+import com.tans.thprofparser.records.subrecorders.IdRootContext
+import com.tans.thprofparser.records.subrecorders.RefRootContext
+import com.tans.thprofparser.records.subrecorders.StackRootContext
+import com.tans.thprofparser.records.subrecorders.SubRecorderType
+import com.tans.thprofparser.records.subrecorders.ThreadRootContext
 import okio.BufferedSource
 import okio.buffer
 import okio.source
+import java.io.ByteArrayInputStream
 import java.io.InputStream
 
 class HprofReader(inputStream: InputStream) {
@@ -38,49 +47,45 @@ class HprofReader(inputStream: InputStream) {
     fun accept(
         hprofVisitor: HprofVisitor
     ) {
-        hprofVisitor.visit(header)
+        hprofVisitor.visitHeader(header)
 
         while (!source.exhausted()) {
             val tag = source.readUnsignedByte()
             val timestamp = source.readUnsignedInt()
             val bodyLen = source.readUnsignedInt()
-            val recorderContext = RecorderContext(
+            val recordContext = RecordContext(
                 tag = tag,
                 timestamp = timestamp,
                 bodyLength = bodyLen,
                 header = header
             )
             when (tag) {
-                RecorderType.STRING_IN_UTF8.tag -> {
-                    readStringRecorder(recorderContext, hprofVisitor)
+                RecordType.STRING_IN_UTF8.tag -> {
+                    readStringRecorder(recordContext, hprofVisitor)
                 }
-                RecorderType.LOAD_CLASS.tag -> {
-                    readLoadClassRecorder(recorderContext, hprofVisitor)
+                RecordType.LOAD_CLASS.tag -> {
+                    readLoadClassRecorder(recordContext, hprofVisitor)
                 }
-                RecorderType.UNLOAD_CLASS.tag -> {
-                    readUnloadClassRecorder(recorderContext, hprofVisitor)
+                RecordType.UNLOAD_CLASS.tag -> {
+                    readUnloadClassRecorder(recordContext, hprofVisitor)
                 }
-                RecorderType.STACK_FRAME.tag -> {
-                    readStackFrameRecorder(recorderContext, hprofVisitor)
+                RecordType.STACK_FRAME.tag -> {
+                    readStackFrameRecorder(recordContext, hprofVisitor)
                 }
-                RecorderType.STACK_TRACE.tag -> {
-                    readStackTraceRecorder(recorderContext, hprofVisitor)
+                RecordType.STACK_TRACE.tag -> {
+                    readStackTraceRecorder(recordContext, hprofVisitor)
                 }
-                RecorderType.HEAP_DUMP.tag -> {
-                    // FIXME:
-                    readUnknownRecorder(recorderContext, hprofVisitor)
-                    // readHeapDumpRecorder(tag, timeStamp, bodyLen, hprofVisitor)
+                RecordType.HEAP_DUMP.tag -> {
+                    readHeapDumpRecorder(recordContext, hprofVisitor)
                 }
-                RecorderType.HEAP_DUMP_SEGMENT.tag -> {
-                    // FIXME:
-                    readUnknownRecorder(recorderContext, hprofVisitor)
-                    // readHeapDumpSegmentRecorder(tag, timeStamp, bodyLen, hprofVisitor)
+                RecordType.HEAP_DUMP_SEGMENT.tag -> {
+                    readHeapDumpRecorder(recordContext, hprofVisitor)
                 }
-                RecorderType.HEAP_DUMP_END.tag -> {
+                RecordType.HEAP_DUMP_END.tag -> {
                     break
                 }
                 else -> {
-                    readUnknownRecorder(recorderContext, hprofVisitor)
+                    readUnknownRecorder(recordContext, hprofVisitor)
                 }
             }
         }
@@ -88,57 +93,51 @@ class HprofReader(inputStream: InputStream) {
     }
 
     private fun readStringRecorder(
-        recorderContext: RecorderContext,
+        recordContext: RecordContext,
         hprofVisitor: HprofVisitor
     ) {
         val id = source.readId(header)
         val str = source.readString(
-            recorderContext.bodyLength - header.identifierByteSize,
+            recordContext.bodyLength - header.identifierByteSize,
             Charsets.UTF_8
         )
-        val recorderVisitor = hprofVisitor.visitStringRecorder(recorderContext)
-        recorderVisitor?.visitString(StringRecorderVisitor.Companion.StringContext(
-            recorderContext = recorderContext,
-            id = id,
-            str = str
-        ))
-        recorderVisitor?.visitEnd()
+        hprofVisitor.visitStringRecord(StringContext(recordContext = recordContext, id = id, str = str))
     }
 
     private fun readLoadClassRecorder(
-        recorderContext: RecorderContext,
+        recordContext: RecordContext,
         hprofVisitor: HprofVisitor
     ) {
         val classSerialNumber = source.readUnsignedInt()
         val id = source.readId(header)
         val stackTraceSerialNumber = source.readUnsignedInt()
         val classNameStringId = source.readId(header)
-        val recorderVisitor = hprofVisitor.visitLoadClassRecorder(recorderContext)
-        recorderVisitor?.visitLoadClass(LoadClassRecorderVisitor.Companion.LoadClassContext(
-            recorderContext = recorderContext,
-            classSerialNumber = classSerialNumber,
-            id = id,
-            stackTraceSerialNumber = stackTraceSerialNumber,
-            classNameStringId = classNameStringId
-        ))
-        recorderVisitor?.visitEnd()
+        hprofVisitor.visitLoadClassRecord(
+            LoadClassContext(
+                recordContext = recordContext,
+                classSerialNumber = classSerialNumber,
+                id = id,
+                stackTraceSerialNumber = stackTraceSerialNumber,
+                classNameStringId = classNameStringId
+            )
+        )
     }
 
     private fun readUnloadClassRecorder(
-        recorderContext: RecorderContext,
+        recordContext: RecordContext,
         hprofVisitor: HprofVisitor
     ) {
         val classSerialNumber = source.readUnsignedInt()
-        val unloadClassVisitor = hprofVisitor.visitUnloadClassRecorder(recorderContext)
-        unloadClassVisitor?.visitUnloadClassRecorder(UnloadClassRecorderVisitor.Companion.UnloadClassContext(
-            recorderContext = recorderContext,
-            classSerialNumber = classSerialNumber
-        ))
-        unloadClassVisitor?.visitEnd()
+        hprofVisitor.visitUnloadClassRecord(
+            UnloadClassContext(
+                recordContext = recordContext,
+                classSerialNumber = classSerialNumber
+            )
+        )
     }
 
     private fun readStackFrameRecorder(
-        recorderContext: RecorderContext,
+        recordContext: RecordContext,
         hprofVisitor: HprofVisitor
     ) {
         val id = source.readId(header)
@@ -147,21 +146,21 @@ class HprofReader(inputStream: InputStream) {
         val sourceFileNameStringId = source.readId(header)
         val classSerialNumber = source.readUnsignedInt()
         val lineNumber = source.readUnsignedInt()
-        val stackFrameVisitor = hprofVisitor.visitStackFrameRecorder(recorderContext)
-        stackFrameVisitor?.visitStackFrame(StackFrameRecorderVisitor.Companion.StackFrameContext(
-            recorderContext = recorderContext,
-            id = id,
-            methodNameStringId = methodNameStringId,
-            methodSignatureStringId = methodSignatureStringId,
-            sourceFileNameStringId = sourceFileNameStringId,
-            classSerialNumber = classSerialNumber,
-            lineNumber = lineNumber
-        ))
-        stackFrameVisitor?.visitEnd()
+        hprofVisitor.visitStackFrameRecord(
+            StackFrameContext(
+                recordContext = recordContext,
+                id = id,
+                methodNameStringId = methodNameStringId,
+                methodSignatureStringId = methodSignatureStringId,
+                sourceFileNameStringId = sourceFileNameStringId,
+                classSerialNumber = classSerialNumber,
+                lineNumber = lineNumber
+            )
+        )
     }
 
     private fun readStackTraceRecorder(
-        recorderContext: RecorderContext,
+        recordContext: RecordContext,
         hprofVisitor: HprofVisitor
     ) {
         val stackTraceSerialNumber = source.readUnsignedInt()
@@ -171,41 +170,225 @@ class HprofReader(inputStream: InputStream) {
         repeat(stackFrameSize.toInt()) {
             stackFrameIds.add(source.readId(header))
         }
-        val stackTraceVisitor = hprofVisitor.visitStackTraceRecorder(recorderContext)
-        stackTraceVisitor?.visitStackTrace(StackTraceRecorderVisitor.Companion.StackTraceContext(
-            recorderContext = recorderContext,
-            stackTraceSerialNumber = stackTraceSerialNumber,
-            threadSerialNumber = threadSerialNumber,
-            stackFrameIds = stackFrameIds
-        ))
-        stackTraceVisitor?.visitEnd()
+        hprofVisitor.visitStackTraceRecord(
+            StackTraceContext(
+                recordContext = recordContext,
+                stackTraceSerialNumber = stackTraceSerialNumber,
+                threadSerialNumber = threadSerialNumber,
+                stackFrameIds = stackFrameIds
+            )
+        )
     }
 
     private fun readHeapDumpRecorder(
-        recorderContext: RecorderContext,
+        recordContext: RecordContext,
         hprofVisitor: HprofVisitor
     ) {
-        // TODO:
-    }
+        val heapDumpVisitor = hprofVisitor.visitHeapDumpRecorder(recordContext)
+        ByteArrayInputStream(source.readByteArray(recordContext.bodyLength)).source().buffer().use { subSource ->
+            while (!subSource.exhausted()) {
+                val subTag = subSource.readUnsignedByte()
+                val heapDumpContext = HeapDumpContext(
+                    recordContext = recordContext,
+                    subTag = subTag
+                )
+                when (subTag) {
+                    SubRecorderType.ROOT_UNKNOWN.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootUnknownSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_JNI_GLOBAL.tag -> {
+                        val id = subSource.readId(header)
+                        val refId = subSource.readId(header)
+                        heapDumpVisitor?.visitRootJniGlobalSubRecord(
+                            RefRootContext(heapDumpContext, id, refId)
+                        )
+                    }
+                    SubRecorderType.ROOT_JNI_LOCAL.tag -> {
+                        val id = subSource.readId(header)
+                        val threadSerialNumber = subSource.readUnsignedInt()
+                        val frameNumber = subSource.readUnsignedInt()
+                        heapDumpVisitor?.visitRootJniLocalSubRecord(
+                            FrameRootContext(heapDumpContext, id, threadSerialNumber, frameNumber)
+                        )
+                    }
+                    SubRecorderType.ROOT_JAVA_FRAME.tag -> {
+                        val id = subSource.readId(header)
+                        val threadSerialNumber = subSource.readUnsignedInt()
+                        val frameNumber = subSource.readUnsignedInt()
+                        heapDumpVisitor?.visitRootJavaFrameSubRecord(
+                            FrameRootContext(heapDumpContext, id, threadSerialNumber, frameNumber)
+                        )
+                    }
+                    SubRecorderType.ROOT_NATIVE_STACK.tag -> {
+                        val id = subSource.readId(header)
+                        val threadSerialNumber = subSource.readUnsignedInt()
+                        heapDumpVisitor?.visitRootNativeStackSubRecord(
+                            ThreadRootContext(heapDumpContext, id, threadSerialNumber)
+                        )
+                    }
+                    SubRecorderType.ROOT_STICKY_CLASS.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootStickyClassSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_THREAD_BLOCK.tag -> {
+                        val id = subSource.readId(header)
+                        val threadSerialNumber = subSource.readUnsignedInt()
+                        heapDumpVisitor?.visitRootThreadBlockSubRecord(
+                            ThreadRootContext(heapDumpContext, id, threadSerialNumber)
+                        )
+                    }
+                    SubRecorderType.ROOT_MONITOR_USED.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootMonitorUsedSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_THREAD_OBJECT.tag -> {
+                        val id = subSource.readId(header)
+                        val threadSerialNumber = subSource.readUnsignedInt()
+                        val frameNumber = subSource.readUnsignedInt()
+                        heapDumpVisitor?.visitRootThreadObjectSubRecord(
+                            FrameRootContext(heapDumpContext, id, threadSerialNumber, frameNumber)
+                        )
+                    }
+                    SubRecorderType.ROOT_INTERNED_STRING.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootInternedStringSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_FINALIZING.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootFinalizingSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_DEBUGGER.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootDebuggerSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_REFERENCE_CLEANUP.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootReferenceCleanupSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_VM_INTERNAL.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootVmInternalSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
+                    SubRecorderType.ROOT_JNI_MONITOR.tag -> {
+                        val id = subSource.readId(header)
+                        val threadSerialNumber = subSource.readUnsignedInt()
+                        val stackDepth = subSource.readUnsignedInt()
+                        heapDumpVisitor?.visitRootJniMonitorSubRecord(
+                            StackRootContext(heapDumpContext, id, threadSerialNumber, stackDepth)
+                        )
+                    }
+                    SubRecorderType.ROOT_UNREACHABLE.tag -> {
+                        val id = subSource.readId(header)
+                        heapDumpVisitor?.visitRootUnreachableSubRecord(
+                            IdRootContext(heapDumpContext, id)
+                        )
+                    }
 
-    private fun readHeapDumpSegmentRecorder(
-        recorderContext: RecorderContext,
-        hprofVisitor: HprofVisitor
-    ) {
-        // TODO:
+
+                    SubRecorderType.CLASS_DUMP.tag -> {
+                        val id = subSource.readId(header)
+                        val stackTraceSerialNumber = subSource.readUnsignedInt()
+                        val superClassId = subSource.readId(header)
+                        val classLoaderId = subSource.readId(header)
+                        val signerId = subSource.readId(header)
+                        val protectionDomainId = subSource.readId(header)
+                        val unknownId1 = subSource.readId(header)
+                        val unknownId2 = subSource.readId(header)
+                        val instanceSize = subSource.readUnsignedInt()
+                        val constFieldSize = subSource.readUnsignedShort()
+                        val constFields = ArrayList<ConstField>()
+                        repeat(constFieldSize) {
+                            constFields.add(subSource.readConstField(header))
+                        }
+                        val staticFieldSize = subSource.readUnsignedShort()
+                        val staticFields = ArrayList<StaticField>()
+                        repeat(staticFieldSize) {
+                            staticFields.add(subSource.readStaticField(header))
+                        }
+                        val memberFieldSize = subSource.readUnsignedShort()
+                        val memberFields = ArrayList<MemberField>()
+                        repeat(memberFieldSize) {
+                            memberFields.add(subSource.readMemberField(header))
+                        }
+                        // TODO:
+                    }
+                    SubRecorderType.INSTANCE_DUMP.tag -> {
+                        val id = subSource.readId(header)
+                        val stackTraceSerialNumber = subSource.readUnsignedInt()
+                        val classId = subSource.readId(header)
+                        val contentSize = subSource.readUnsignedInt()
+                        val contentBytes = subSource.readByteArray(contentSize)
+                        // TODO:
+                    }
+
+                    SubRecorderType.OBJECT_ARRAY_DUMP.tag -> {
+                        val id = subSource.readId(header)
+                        val stackTraceSerialNumber = subSource.readUnsignedInt()
+                        val arrayLength = subSource.readUnsignedInt()
+                        val arrayClassId = subSource.readId(header)
+                        val elementIds = ArrayList<Long>()
+                        repeat(arrayLength.toInt()) {
+                            elementIds.add(subSource.readId(header))
+                        }
+                        // TODO:
+                    }
+
+                    SubRecorderType.PRIMITIVE_ARRAY_DUMP.tag -> {
+                        val id = subSource.readId(header)
+                        val stackTraceSerialNumber = subSource.readUnsignedInt()
+                        val arrayLength = subSource.readUnsignedInt()
+                        val type = subSource.readUnsignedByte()
+                        val elements = ArrayList<ValueHolder>()
+                        repeat(arrayLength.toInt()) {
+                            elements.add(subSource.readValue(type, header))
+                        }
+                        // TODO:
+                    }
+
+
+                    SubRecorderType.HEAP_DUMP_INFO.tag -> {
+                        val heapId = subSource.readId(header)
+                        val stringId = subSource.readId(header)
+                        heapDumpVisitor?.visitHeapDumpInfoSubRecord(
+                            HeapDumpInfoContext(heapDumpContext, heapId, stringId)
+                        )
+                    }
+
+                    else -> {
+                        break
+                    }
+                }
+            }
+            heapDumpVisitor?.visitEnd()
+        }
     }
 
     private fun readUnknownRecorder(
-        recorderContext: RecorderContext,
+        recordContext: RecordContext,
         hprofVisitor: HprofVisitor
     ) {
-        val bytes = source.readByteArray(recorderContext.bodyLength)
-        val visitor = hprofVisitor.visitUnknownRecorder(recorderContext)
-        visitor?.visitBody(UnknownRecorderVisitor.Companion.UnknownBodyContext(
-            recorderContext = recorderContext,
+        val bytes = source.readByteArray(recordContext.bodyLength)
+        hprofVisitor.visitUnknownRecord(UnknownContext(
+            recordContext = recordContext,
             body = bytes
         ))
-        visitor?.visitEnd()
     }
 
 }

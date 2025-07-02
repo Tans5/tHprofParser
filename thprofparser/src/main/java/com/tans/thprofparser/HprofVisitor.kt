@@ -1,51 +1,58 @@
 package com.tans.thprofparser
 
-import com.tans.thprofparser.recorders.LoadClassRecorderVisitor
-import com.tans.thprofparser.recorders.RecorderContext
-import com.tans.thprofparser.recorders.StackFrameRecorderVisitor
-import com.tans.thprofparser.recorders.StackTraceRecorderVisitor
-import com.tans.thprofparser.recorders.StringRecorderVisitor
-import com.tans.thprofparser.recorders.UnknownRecorderVisitor
-import com.tans.thprofparser.recorders.UnloadClassRecorderVisitor
+import com.tans.thprofparser.records.HeapDumpRecordVisitor
+import com.tans.thprofparser.records.LoadClassContext
+import com.tans.thprofparser.records.RecordContext
+import com.tans.thprofparser.records.StackFrameContext
+import com.tans.thprofparser.records.StackTraceContext
+import com.tans.thprofparser.records.StringContext
+import com.tans.thprofparser.records.UnknownContext
+import com.tans.thprofparser.records.UnloadClassContext
 
 open class HprofVisitor(protected val nextVisitor: HprofVisitor? = null) {
 
-    open fun visit(header: HprofHeader) {
-        nextVisitor?.visit(header)
+    open fun visitHeader(header: HprofHeader) {
+        nextVisitor?.visitHeader(header)
     }
 
-    open fun visitStringRecorder(recorderContext: RecorderContext): StringRecorderVisitor? {
-        return nextVisitor?.visitStringRecorder(recorderContext)
+    open fun visitStringRecord(context: StringContext) {
+        nextVisitor?.visitStringRecord(context)
     }
 
-    open fun visitLoadClassRecorder(
-        recorderContext: RecorderContext
-    ) : LoadClassRecorderVisitor? {
-        return nextVisitor?.visitLoadClassRecorder(recorderContext)
+    open fun visitLoadClassRecord(
+        context: LoadClassContext
+    ) {
+        nextVisitor?.visitLoadClassRecord(context)
     }
 
-    open fun visitUnloadClassRecorder(
-        recorderContext: RecorderContext
-    ) : UnloadClassRecorderVisitor? {
-        return nextVisitor?.visitUnloadClassRecorder(recorderContext)
+    open fun visitUnloadClassRecord(
+        context: UnloadClassContext
+    ) {
+        nextVisitor?.visitUnloadClassRecord(context)
     }
 
-    open fun visitStackFrameRecorder(
-        recorderContext: RecorderContext
-    ): StackFrameRecorderVisitor? {
-        return nextVisitor?.visitStackFrameRecorder(recorderContext)
+    open fun visitStackFrameRecord(
+        context: StackFrameContext
+    ) {
+        nextVisitor?.visitStackFrameRecord(context)
     }
 
-    open fun visitStackTraceRecorder(
-        recorderContext: RecorderContext
-    ): StackTraceRecorderVisitor? {
-        return nextVisitor?.visitStackTraceRecorder(recorderContext)
+    open fun visitStackTraceRecord(
+        context: StackTraceContext
+    ) {
+        nextVisitor?.visitStackTraceRecord(context)
     }
 
-    open fun visitUnknownRecorder(
-        recorderContext: RecorderContext
-    ): UnknownRecorderVisitor? {
-        return nextVisitor?.visitUnknownRecorder(recorderContext)
+    open fun visitHeapDumpRecorder(
+        recordContext: RecordContext
+    ): HeapDumpRecordVisitor? {
+        return nextVisitor?.visitHeapDumpRecorder(recordContext)
+    }
+
+    open fun visitUnknownRecord(
+        context: UnknownContext
+    ) {
+        nextVisitor?.visitUnknownRecord(context)
     }
 
     open fun visitEnd() {

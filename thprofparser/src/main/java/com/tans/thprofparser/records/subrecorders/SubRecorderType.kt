@@ -1,0 +1,27 @@
+package com.tans.thprofparser.records.subrecorders
+
+enum class SubRecorderType(val tag: Int) {
+    ROOT_UNKNOWN(0xff),
+    ROOT_JNI_GLOBAL(0x01),
+    ROOT_JNI_LOCAL(0x02),
+    ROOT_JAVA_FRAME(0x03),
+    ROOT_NATIVE_STACK(0x04),
+    ROOT_STICKY_CLASS(0x05),
+    ROOT_THREAD_BLOCK(0x06),
+    ROOT_MONITOR_USED(0x07),
+    ROOT_THREAD_OBJECT(0x08),
+    ROOT_INTERNED_STRING(0x89),
+    ROOT_FINALIZING(0x8a),
+    ROOT_DEBUGGER(0x8b),
+    ROOT_REFERENCE_CLEANUP(0x8c),
+    ROOT_VM_INTERNAL(0x8d),
+    ROOT_JNI_MONITOR(0x8e),
+    ROOT_UNREACHABLE(0x90),
+
+    CLASS_DUMP(0x20),
+    INSTANCE_DUMP(0x21),
+    OBJECT_ARRAY_DUMP(0x22),
+    PRIMITIVE_ARRAY_DUMP(0x23),
+
+    HEAP_DUMP_INFO(0xfe),
+}

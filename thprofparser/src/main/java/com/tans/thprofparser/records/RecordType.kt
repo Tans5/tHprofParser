@@ -1,6 +1,6 @@
-package com.tans.thprofparser.recorders
+package com.tans.thprofparser.records
 
-enum class RecorderType(val tag: Int) {
+enum class RecordType(val tag: Int) {
     STRING_IN_UTF8(0x01),
     LOAD_CLASS(0x02),
     UNLOAD_CLASS(0x03),

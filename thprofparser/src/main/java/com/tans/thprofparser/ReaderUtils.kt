@@ -66,3 +66,72 @@ fun BufferedSource.readDouble(): Double {
     return Double.fromBits(readLong())
 }
 
+fun BufferedSource.readValue(type: Int, header: HprofHeader): ValueHolder {
+    return when (type) {
+        REFERENCE_HPROF_TYPE -> {
+            ValueHolder.ReferenceHolder(readId(header))
+        }
+        PrimitiveType.BOOLEAN.hprofType -> {
+            ValueHolder.BooleanHolder(readBoolean())
+        }
+
+        PrimitiveType.CHAR.hprofType -> {
+            ValueHolder.CharHolder(readChar())
+        }
+
+        PrimitiveType.FLOAT.hprofType -> {
+            ValueHolder.FloatHolder(readFloat())
+        }
+
+        PrimitiveType.DOUBLE.hprofType -> {
+            ValueHolder.DoubleHolder(readDouble())
+        }
+
+        PrimitiveType.BYTE.hprofType -> {
+            ValueHolder.ByteHolder(readByte())
+        }
+
+        PrimitiveType.SHORT.hprofType -> {
+            ValueHolder.ShortHolder(readShort())
+        }
+
+        PrimitiveType.INT.hprofType -> {
+            ValueHolder.IntHolder(readInt())
+        }
+
+        PrimitiveType.LONG.hprofType -> {
+            ValueHolder.LongHolder(readLong())
+        }
+
+        else -> {
+            throw HprofParserException("Unknown value type: $type")
+        }
+    }
+}
+
+fun BufferedSource.readValue(header: HprofHeader): ValueHolder {
+    val type = readUnsignedByte()
+    return readValue(type, header)
+}
+
+fun BufferedSource.readConstField(header: HprofHeader): ConstField {
+    return ConstField(
+        index = readUnsignedInt(),
+        value = readValue(header)
+    )
+}
+
+fun BufferedSource.readStaticField(header: HprofHeader): StaticField {
+    return StaticField(
+        fieldNameStrId = readId(header),
+        value = readValue(header)
+    )
+}
+
+fun BufferedSource.readMemberField(header: HprofHeader): MemberField {
+    return MemberField(
+        fieldNameStrId = readId(header),
+        type = readUnsignedByte()
+    )
+}
+
