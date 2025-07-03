@@ -4,15 +4,18 @@ package com.tans.thprofparser.demo
 import com.tans.thprofparser.HprofReader
 import com.tans.thprofparser.HprofVisitor
 import com.tans.thprofparser.HprofWriter
-import com.tans.thprofparser.records.StringContext
 import java.io.File
 
-object Main {
+object Hprof {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val inputHprofFile = File("./demo/dump.hprof")
-        val outputHprofFile = File("./demo/output_dump.hprof")
+        val inputHprofFile = File("./demo/input/dump.hprof")
+        val outputDir = File("./demo/output")
+        if (!outputDir.exists()) {
+            outputDir.mkdirs()
+        }
+        val outputHprofFile = File(outputDir, "output.hprof")
         if (!outputHprofFile.exists()) {
             outputHprofFile.createNewFile()
         }
@@ -20,14 +23,10 @@ object Main {
             outputHprofFile.outputStream().use { outputStream ->
                 val reader = HprofReader(inputStream)
                 val writer = HprofWriter(outputStream)
-                val visitor = object : HprofVisitor(writer) {
-                    override fun visitStringRecord(context: StringContext) {
-                        super.visitStringRecord(context)
-                        println("Id: ${context.id}, Str: ${context.str}")
-                    }
-                }
+                val visitor = object : HprofVisitor(writer) {}
                 reader.accept(visitor)
             }
         }
+        assertFileIsSame(inputHprofFile, outputHprofFile)
     }
 }

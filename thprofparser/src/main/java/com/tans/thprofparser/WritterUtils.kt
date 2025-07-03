@@ -39,3 +39,93 @@ fun BufferedSink.writeId(id: Long, header: HprofHeader) {
         }
     }
 }
+
+fun BufferedSink.writeBoolean(value: Boolean) {
+    writeByte(if (value) 0x01 else 0x00)
+}
+
+fun BufferedSink.writeChar(value: Char) {
+    writeUnsignedShort(value.code)
+}
+
+fun BufferedSink.writeFloat(value: Float) {
+    writeInt(value.toRawBits())
+}
+
+fun BufferedSink.writeDouble(value: Double) {
+    writeLong(value.toRawBits())
+}
+
+fun BufferedSink.writeValue(value: ValueHolder, header: HprofHeader, writeType: Boolean) {
+    when (value) {
+        is ValueHolder.BooleanHolder ->  {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.BOOLEAN.hprofType)
+            }
+            writeBoolean(value.value)
+        }
+        is ValueHolder.ByteHolder -> {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.BYTE.hprofType)
+            }
+            writeUnsignedByte(value.value.toInt())
+        }
+        is ValueHolder.CharHolder -> {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.CHAR.hprofType)
+            }
+            writeChar(value.value)
+        }
+        is ValueHolder.DoubleHolder ->  {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.DOUBLE.hprofType)
+            }
+            writeDouble(value.value)
+        }
+        is ValueHolder.FloatHolder -> {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.FLOAT.hprofType)
+            }
+            writeFloat(value.value)
+        }
+        is ValueHolder.IntHolder ->  {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.INT.hprofType)
+            }
+            writeInt(value.value)
+        }
+        is ValueHolder.LongHolder ->  {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.LONG.hprofType)
+            }
+            writeLong(value.value)
+        }
+        is ValueHolder.ReferenceHolder -> {
+            if (writeType) {
+                writeUnsignedByte(REFERENCE_HPROF_TYPE)
+            }
+            writeId(value.value, header)
+        }
+        is ValueHolder.ShortHolder -> {
+            if (writeType) {
+                writeUnsignedByte(PrimitiveType.SHORT.hprofType)
+            }
+            writeShort(value.value.toInt())
+        }
+    }
+}
+
+fun BufferedSink.writeConstField(constField: ConstField, header: HprofHeader) {
+    writeUnsignedInt(constField.index)
+    writeValue(constField.value, header, true)
+}
+
+fun BufferedSink.writeStaticField(staticField: StaticField, header: HprofHeader) {
+    writeId(staticField.fieldNameStrId, header)
+    writeValue(staticField.value, header, true)
+}
+
+fun BufferedSink.writeMemberField(memberField: MemberField, header: HprofHeader) {
+    writeId(memberField.fieldNameStrId, header)
+    writeUnsignedByte(memberField.type)
+}

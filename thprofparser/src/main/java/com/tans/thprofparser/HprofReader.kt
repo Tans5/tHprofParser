@@ -9,9 +9,13 @@ import com.tans.thprofparser.records.StackTraceContext
 import com.tans.thprofparser.records.StringContext
 import com.tans.thprofparser.records.UnknownContext
 import com.tans.thprofparser.records.UnloadClassContext
+import com.tans.thprofparser.records.subrecorders.ClassDumpContext
 import com.tans.thprofparser.records.subrecorders.FrameRootContext
 import com.tans.thprofparser.records.subrecorders.HeapDumpInfoContext
 import com.tans.thprofparser.records.subrecorders.IdRootContext
+import com.tans.thprofparser.records.subrecorders.InstanceDumpContext
+import com.tans.thprofparser.records.subrecorders.ObjectArrayDumpContext
+import com.tans.thprofparser.records.subrecorders.PrimitiveArrayDumpContext
 import com.tans.thprofparser.records.subrecorders.RefRootContext
 import com.tans.thprofparser.records.subrecorders.StackRootContext
 import com.tans.thprofparser.records.subrecorders.SubRecorderType
@@ -301,7 +305,6 @@ class HprofReader(inputStream: InputStream) {
                         )
                     }
 
-
                     SubRecorderType.CLASS_DUMP.tag -> {
                         val id = subSource.readId(header)
                         val stackTraceSerialNumber = subSource.readUnsignedInt()
@@ -327,7 +330,23 @@ class HprofReader(inputStream: InputStream) {
                         repeat(memberFieldSize) {
                             memberFields.add(subSource.readMemberField(header))
                         }
-                        // TODO:
+                        heapDumpVisitor?.visitClassDumpSubRecord(
+                            ClassDumpContext(
+                                heapDumpContext,
+                                id,
+                                stackTraceSerialNumber,
+                                superClassId,
+                                classLoaderId,
+                                signerId,
+                                protectionDomainId,
+                                unknownId1,
+                                unknownId2,
+                                instanceSize,
+                                constFields,
+                                staticFields,
+                                memberFields
+                            )
+                        )
                     }
                     SubRecorderType.INSTANCE_DUMP.tag -> {
                         val id = subSource.readId(header)
@@ -335,7 +354,15 @@ class HprofReader(inputStream: InputStream) {
                         val classId = subSource.readId(header)
                         val contentSize = subSource.readUnsignedInt()
                         val contentBytes = subSource.readByteArray(contentSize)
-                        // TODO:
+                        heapDumpVisitor?.visitInstanceDumpSubRecord(
+                            InstanceDumpContext(
+                                heapDumpContext,
+                                id,
+                                stackTraceSerialNumber,
+                                classId,
+                                contentBytes
+                            )
+                        )
                     }
 
                     SubRecorderType.OBJECT_ARRAY_DUMP.tag -> {
@@ -347,7 +374,15 @@ class HprofReader(inputStream: InputStream) {
                         repeat(arrayLength.toInt()) {
                             elementIds.add(subSource.readId(header))
                         }
-                        // TODO:
+                        heapDumpVisitor?.visitObjectArrayDumpSubRecord(
+                            ObjectArrayDumpContext(
+                                heapDumpContext,
+                                id,
+                                stackTraceSerialNumber,
+                                arrayClassId,
+                                elementIds
+                            )
+                        )
                     }
 
                     SubRecorderType.PRIMITIVE_ARRAY_DUMP.tag -> {
@@ -359,7 +394,15 @@ class HprofReader(inputStream: InputStream) {
                         repeat(arrayLength.toInt()) {
                             elements.add(subSource.readValue(type, header))
                         }
-                        // TODO:
+                        heapDumpVisitor?.visitPrimitiveArrayDumpSubRecord(
+                            PrimitiveArrayDumpContext(
+                                heapDumpContext,
+                                id,
+                                stackTraceSerialNumber,
+                                type,
+                                elements
+                            )
+                        )
                     }
 
 

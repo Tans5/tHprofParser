@@ -1,8 +1,12 @@
 package com.tans.thprofparser.records
 
+import com.tans.thprofparser.records.subrecorders.ClassDumpContext
 import com.tans.thprofparser.records.subrecorders.FrameRootContext
 import com.tans.thprofparser.records.subrecorders.HeapDumpInfoContext
 import com.tans.thprofparser.records.subrecorders.IdRootContext
+import com.tans.thprofparser.records.subrecorders.InstanceDumpContext
+import com.tans.thprofparser.records.subrecorders.ObjectArrayDumpContext
+import com.tans.thprofparser.records.subrecorders.PrimitiveArrayDumpContext
 import com.tans.thprofparser.records.subrecorders.RefRootContext
 import com.tans.thprofparser.records.subrecorders.StackRootContext
 import com.tans.thprofparser.records.subrecorders.ThreadRootContext
@@ -78,6 +82,22 @@ open class HeapDumpRecordVisitor(
 
     open fun visitHeapDumpInfoSubRecord(context: HeapDumpInfoContext) {
         nextVisitor?.visitHeapDumpInfoSubRecord(context)
+    }
+
+    open fun visitClassDumpSubRecord(context: ClassDumpContext) {
+        nextVisitor?.visitClassDumpSubRecord(context)
+    }
+
+    open fun visitInstanceDumpSubRecord(context: InstanceDumpContext) {
+        nextVisitor?.visitInstanceDumpSubRecord(context)
+    }
+
+    open fun visitPrimitiveArrayDumpSubRecord(context: PrimitiveArrayDumpContext) {
+        nextVisitor?.visitPrimitiveArrayDumpSubRecord(context)
+    }
+
+    open fun visitObjectArrayDumpSubRecord(context: ObjectArrayDumpContext) {
+        nextVisitor?.visitObjectArrayDumpSubRecord(context)
     }
 
     open fun visitEnd() {
