@@ -1,13 +1,8 @@
 package com.tans.thprofparser
 
 import com.tans.thprofparser.records.HeapDumpRecordVisitor
-import com.tans.thprofparser.records.LoadClassContext
+import com.tans.thprofparser.records.Record
 import com.tans.thprofparser.records.RecordContext
-import com.tans.thprofparser.records.StackFrameContext
-import com.tans.thprofparser.records.StackTraceContext
-import com.tans.thprofparser.records.StringContext
-import com.tans.thprofparser.records.UnknownContext
-import com.tans.thprofparser.records.UnloadClassContext
 
 open class HprofVisitor(protected val nextVisitor: HprofVisitor? = null) {
 
@@ -15,42 +10,36 @@ open class HprofVisitor(protected val nextVisitor: HprofVisitor? = null) {
         nextVisitor?.visitHeader(header)
     }
 
-    open fun visitStringRecord(context: StringContext) {
+    open fun visitStringRecord(context: RecordContext<Record.StringRecord>) {
         nextVisitor?.visitStringRecord(context)
     }
 
-    open fun visitLoadClassRecord(
-        context: LoadClassContext
-    ) {
+    open fun visitLoadClassRecord(context: RecordContext<Record.LoadClassRecord>) {
         nextVisitor?.visitLoadClassRecord(context)
     }
 
-    open fun visitUnloadClassRecord(
-        context: UnloadClassContext
-    ) {
+    open fun visitUnloadClassRecord(context: RecordContext<Record.UnloadClassRecord>) {
         nextVisitor?.visitUnloadClassRecord(context)
     }
 
-    open fun visitStackFrameRecord(
-        context: StackFrameContext
-    ) {
+    open fun visitStackFrameRecord(context: RecordContext<Record.StackFrameRecord>) {
         nextVisitor?.visitStackFrameRecord(context)
     }
 
-    open fun visitStackTraceRecord(
-        context: StackTraceContext
-    ) {
+    open fun visitStackTraceRecord(context: RecordContext<Record.StackTraceRecord>) {
         nextVisitor?.visitStackTraceRecord(context)
     }
 
-    open fun visitHeapDumpRecorder(
-        recordContext: RecordContext
+    open fun visitHeapDumpRecord(
+        tag: Int,
+        timestamp: Long,
+        header: HprofHeader
     ): HeapDumpRecordVisitor? {
-        return nextVisitor?.visitHeapDumpRecorder(recordContext)
+        return nextVisitor?.visitHeapDumpRecord(tag, timestamp, header)
     }
 
     open fun visitUnknownRecord(
-        context: UnknownContext
+        context: RecordContext<Record.UnknownRecord>
     ) {
         nextVisitor?.visitUnknownRecord(context)
     }

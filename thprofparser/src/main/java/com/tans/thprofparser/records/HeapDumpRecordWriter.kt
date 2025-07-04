@@ -1,16 +1,8 @@
 package com.tans.thprofparser.records
 
 import com.tans.thprofparser.HprofHeader
-import com.tans.thprofparser.records.subrecorders.ClassDumpContext
-import com.tans.thprofparser.records.subrecorders.FrameRootContext
-import com.tans.thprofparser.records.subrecorders.HeapDumpInfoContext
-import com.tans.thprofparser.records.subrecorders.IdRootContext
-import com.tans.thprofparser.records.subrecorders.InstanceDumpContext
-import com.tans.thprofparser.records.subrecorders.ObjectArrayDumpContext
-import com.tans.thprofparser.records.subrecorders.PrimitiveArrayDumpContext
-import com.tans.thprofparser.records.subrecorders.RefRootContext
-import com.tans.thprofparser.records.subrecorders.StackRootContext
-import com.tans.thprofparser.records.subrecorders.ThreadRootContext
+import com.tans.thprofparser.records.subrecorders.SubRecord
+import com.tans.thprofparser.records.subrecorders.SubRecordContext
 import com.tans.thprofparser.writeConstField
 import com.tans.thprofparser.writeId
 import com.tans.thprofparser.writeMemberField
@@ -25,192 +17,314 @@ import okio.sink
 import java.io.ByteArrayOutputStream
 
 class HeapDumpRecordWriter(
-    recordContext: RecordContext,
+    tag: Int,
+    timestamp: Long,
+    header: HprofHeader,
     private val sink: BufferedSink
-) : HeapDumpRecordVisitor(recordContext) {
-
-    private val header: HprofHeader = recordContext.header
+) : HeapDumpRecordVisitor(tag = tag, timestamp = timestamp, header = header) {
 
     private val subOutputStream = ByteArrayOutputStream()
     private val subSink: BufferedSink = subOutputStream.sink().buffer()
 
-    override fun visitRootUnknownSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootUnknownSubRecord(context: SubRecordContext<SubRecord.RootUnknownSubRecord>) {
+        subSink.writeRootUnknownSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootJniGlobalSubRecord(context: RefRootContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-            writeId(context.refId, header)
-        }
+    override fun visitRootJniGlobalSubRecord(context: SubRecordContext<SubRecord.RootJniGlobalSubRecord>) {
+        subSink.writeRootJniGlobalSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootJniLocalSubRecord(context: FrameRootContext) {
-        writeFrameRootContext(context)
+    override fun visitRootJniLocalSubRecord(context: SubRecordContext<SubRecord.RootJniLocalSubRecord>) {
+        subSink.writeRootJniLocalSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootJavaFrameSubRecord(context: FrameRootContext) {
-        writeFrameRootContext(context)
+    override fun visitRootJavaFrameSubRecord(context: SubRecordContext<SubRecord.RootJavaFrameSubRecord>) {
+        subSink.writeRootJavaFrameSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootNativeStackSubRecord(context: ThreadRootContext) {
-        writeThreadRootContext(context)
+    override fun visitRootNativeStackSubRecord(context: SubRecordContext<SubRecord.RootNativeStackSubRecord>) {
+        subSink.writeRootNativeStackSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootStickyClassSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootStickyClassSubRecord(context: SubRecordContext<SubRecord.RootStickyClassSubRecord>) {
+        subSink.writeRootStickyClassSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootThreadBlockSubRecord(context: ThreadRootContext) {
-        writeThreadRootContext(context)
+    override fun visitRootThreadBlockSubRecord(context: SubRecordContext<SubRecord.RootThreadBlockSubRecord>) {
+        subSink.writeRootThreadBlockSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootMonitorUsedSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootMonitorUsedSubRecord(context: SubRecordContext<SubRecord.RootMonitorUsedSubRecord>) {
+        subSink.writeRootMonitorUsedSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootThreadObjectSubRecord(context: FrameRootContext) {
-        writeFrameRootContext(context)
+    override fun visitRootThreadObjectSubRecord(context: SubRecordContext<SubRecord.RootThreadObjectSubRecord>) {
+        subSink.writeRootThreadObjectSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootInternedStringSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootInternedStringSubRecord(context: SubRecordContext<SubRecord.RootInternedStringSubRecord>) {
+        subSink.writeRootInternedStringSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootFinalizingSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootFinalizingSubRecord(context: SubRecordContext<SubRecord.RootFinalizingSubRecord>) {
+        subSink.writeRootFinalizingSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootDebuggerSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootDebuggerSubRecord(context: SubRecordContext<SubRecord.RootDebuggerSubRecord>) {
+        subSink.writeRootDebuggerSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootReferenceCleanupSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootReferenceCleanupSubRecord(context: SubRecordContext<SubRecord.RootReferenceCleanupSubRecord>) {
+        subSink.writeRootReferenceCleanupSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootVmInternalSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootVmInternalSubRecord(context: SubRecordContext<SubRecord.RootVmInternalSubRecord>) {
+        subSink.writeRootVmInternalSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootJniMonitorSubRecord(context: StackRootContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-            writeUnsignedInt(context.threadSerialNumber)
-            writeUnsignedInt(context.stackDepth)
-        }
+    override fun visitRootJniMonitorSubRecord(context: SubRecordContext<SubRecord.RootJniMonitorSubRecord>) {
+        subSink.writeRootJniMonitorSubRecord(context.subRecord, header)
     }
 
-    override fun visitRootUnreachableSubRecord(context: IdRootContext) {
-        writeIdRootContext(context)
+    override fun visitRootUnreachableSubRecord(context: SubRecordContext<SubRecord.RootUnreachableSubRecord>) {
+        subSink.writeRootUnreachableSubRecord(context.subRecord, header)
     }
 
-    override fun visitHeapDumpInfoSubRecord(context: HeapDumpInfoContext) {
-        subSink.apply {
-           writeUnsignedByte(context.heapDumpContext.subTag)
-           writeId(context.heapId, header)
-           writeId(context.stringId, header)
-        }
+    override fun visitHeapDumpInfoSubRecord(context: SubRecordContext<SubRecord.HeapDumpInfoSubRecord>) {
+        subSink.writeHeapDumpInfoSubRecord(context.subRecord, header)
     }
 
-    override fun visitClassDumpSubRecord(context: ClassDumpContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-            writeUnsignedInt(context.stackTraceSerialNumber)
-            writeId(context.superClassId, header)
-            writeId(context.classLoaderId, header)
-            writeId(context.signerId, header)
-            writeId(context.protectionDomainId, header)
-            writeId(context.unknownId1, header)
-            writeId(context.unknownId2, header)
-            writeUnsignedInt(context.instanceSize)
-            writeUnsignedShort(context.constFields.size)
-            for (constField in context.constFields) {
-                writeConstField(constField, header)
-            }
-            writeUnsignedShort(context.staticFields.size)
-            for (staticField in context.staticFields) {
-                writeStaticField(staticField, header)
-            }
-            writeUnsignedShort(context.memberFields.size)
-            for (memberField in context.memberFields) {
-                writeMemberField(memberField, header)
-            }
-        }
+    override fun visitClassDumpSubRecord(context: SubRecordContext<SubRecord.ClassDumpSubRecord>) {
+        subSink.writeClassDumpSubRecord(context.subRecord, header)
     }
 
-    override fun visitInstanceDumpSubRecord(context: InstanceDumpContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-            writeUnsignedInt(context.stackTraceSerialNumber)
-            writeId(context.classId, header)
-            writeUnsignedInt(context.contentBytes.size.toLong())
-            write(context.contentBytes)
-        }
+    override fun visitInstanceDumpSubRecord(context: SubRecordContext<SubRecord.InstanceDumpSubRecord>) {
+        subSink.writeInstanceDumpSubRecord(context.subRecord, header)
     }
 
-    override fun visitObjectArrayDumpSubRecord(context: ObjectArrayDumpContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-            writeUnsignedInt(context.stackTraceSerialNumber)
-            writeUnsignedInt(context.elementIds.size.toLong())
-            writeId(context.arrayClassId, header)
-            for (elementId in context.elementIds) {
-                writeId(elementId, header)
-            }
-        }
+    override fun visitObjectArrayDumpSubRecord(context: SubRecordContext<SubRecord.ObjectArrayDumpSubRecord>) {
+        subSink.writeObjectArrayDumpSubRecord(context.subRecord, header)
     }
 
-    override fun visitPrimitiveArrayDumpSubRecord(context: PrimitiveArrayDumpContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-            writeUnsignedInt(context.stackTraceSerialNumber)
-            writeUnsignedInt(context.elements.size.toLong())
-            writeUnsignedByte(context.type)
-            for (element in context.elements) {
-                writeValue(element, header, false)
-            }
-        }
+    override fun visitPrimitiveArrayDumpSubRecord(context: SubRecordContext<SubRecord.PrimitiveArrayDumpSubRecord>) {
+        subSink.writePrimitiveArrayDumpSubRecord(context.subRecord, header)
     }
 
     override fun visitEnd() {
         subSink.flush()
         val bodyBytes = subOutputStream.toByteArray()
         sink.apply {
-            writeUnsignedByte(recordContext.tag)
-            writeUnsignedInt(recordContext.timestamp)
+            writeUnsignedByte(tag)
+            writeUnsignedInt(timestamp)
             writeUnsignedInt(bodyBytes.size.toLong())
             write(bodyBytes)
         }
     }
 
-    private fun writeIdRootContext(context: IdRootContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-        }
-    }
+    companion object {
 
-    private fun writeThreadRootContext(context: ThreadRootContext) {
-        subSink.apply {
-           writeUnsignedByte(context.heapDumpContext.subTag)
-           writeId(context.id, header)
-           writeUnsignedInt(context.threadSerialNumber)
+        fun BufferedSink.writeRootUnknownSubRecord(record: SubRecord.RootUnknownSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
         }
-    }
 
-    private fun writeFrameRootContext(context: FrameRootContext) {
-        subSink.apply {
-            writeUnsignedByte(context.heapDumpContext.subTag)
-            writeId(context.id, header)
-            writeUnsignedInt(context.threadSerialNumber)
-            writeUnsignedInt(context.frameNumber)
+
+        fun BufferedSink.writeRootJniGlobalSubRecord(record: SubRecord.RootJniGlobalSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeId(refId, header)
+            }
+        }
+
+
+        fun BufferedSink.writeRootJniLocalSubRecord(record: SubRecord.RootJniLocalSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+
+
+        fun BufferedSink.writeRootJavaFrameSubRecord(record: SubRecord.RootJavaFrameSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(threadSerialNumber)
+                writeUnsignedInt(frameNumber)
+            }
+        }
+
+
+        fun BufferedSink.writeRootNativeStackSubRecord(record: SubRecord.RootNativeStackSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(threadSerialNumber)
+            }
+        }
+
+
+        fun BufferedSink.writeRootStickyClassSubRecord(record: SubRecord.RootStickyClassSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+
+        fun BufferedSink.writeRootThreadBlockSubRecord(record: SubRecord.RootThreadBlockSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(threadSerialNumber)
+            }
+        }
+
+        fun BufferedSink.writeRootMonitorUsedSubRecord(record: SubRecord.RootMonitorUsedSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+
+        fun BufferedSink.writeRootThreadObjectSubRecord(record: SubRecord.RootThreadObjectSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(threadSerialNumber)
+                writeUnsignedInt(frameNumber)
+            }
+        }
+
+
+        fun BufferedSink.writeRootInternedStringSubRecord(record: SubRecord.RootInternedStringSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+
+        fun BufferedSink.writeRootFinalizingSubRecord(record: SubRecord.RootFinalizingSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+        fun BufferedSink.writeRootDebuggerSubRecord(record: SubRecord.RootDebuggerSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+
+        fun BufferedSink.writeRootReferenceCleanupSubRecord(record: SubRecord.RootReferenceCleanupSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+        fun BufferedSink.writeRootVmInternalSubRecord(record: SubRecord.RootVmInternalSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+        fun BufferedSink.writeRootJniMonitorSubRecord(record: SubRecord.RootJniMonitorSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(threadSerialNumber)
+                writeUnsignedInt(stackDepth)
+            }
+        }
+
+        fun BufferedSink.writeRootUnreachableSubRecord(record: SubRecord.RootUnreachableSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+            }
+        }
+
+        fun BufferedSink.writeHeapDumpInfoSubRecord(record: SubRecord.HeapDumpInfoSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(heapId, header)
+                writeId(stringId, header)
+            }
+        }
+
+        fun BufferedSink.writeClassDumpSubRecord(record: SubRecord.ClassDumpSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(stackTraceSerialNumber)
+                writeId(superClassId, header)
+                writeId(classLoaderId, header)
+                writeId(signerId, header)
+                writeId(protectionDomainId, header)
+                writeId(unknownId1, header)
+                writeId(unknownId2, header)
+                writeUnsignedInt(instanceSize)
+                writeUnsignedShort(constFields.size)
+                for (constField in constFields) {
+                    writeConstField(constField, header)
+                }
+                writeUnsignedShort(staticFields.size)
+                for (staticField in staticFields) {
+                    writeStaticField(staticField, header)
+                }
+                writeUnsignedShort(memberFields.size)
+                for (memberField in memberFields) {
+                    writeMemberField(memberField, header)
+                }
+            }
+        }
+
+        fun BufferedSink.writeInstanceDumpSubRecord(record: SubRecord.InstanceDumpSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(stackTraceSerialNumber)
+                writeId(classId, header)
+                writeUnsignedInt(contentBytes.size.toLong())
+                write(contentBytes)
+            }
+        }
+
+        fun BufferedSink.writeObjectArrayDumpSubRecord(record: SubRecord.ObjectArrayDumpSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(stackTraceSerialNumber)
+                writeUnsignedInt(elementIds.size.toLong())
+                writeId(arrayClassId, header)
+                for (elementId in elementIds) {
+                    writeId(elementId, header)
+                }
+            }
+        }
+
+        fun BufferedSink.writePrimitiveArrayDumpSubRecord(record: SubRecord.PrimitiveArrayDumpSubRecord, header: HprofHeader) {
+            record.apply {
+                writeUnsignedByte(subTag)
+                writeId(id, header)
+                writeUnsignedInt(stackTraceSerialNumber)
+                writeUnsignedInt(elements.size.toLong())
+                writeUnsignedByte(type)
+                for (element in elements) {
+                    writeValue(element, header, false)
+                }
+            }
         }
     }
 }

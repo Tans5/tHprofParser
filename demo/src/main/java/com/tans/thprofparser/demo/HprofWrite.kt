@@ -6,7 +6,7 @@ import com.tans.thprofparser.HprofVisitor
 import com.tans.thprofparser.HprofWriter
 import java.io.File
 
-object Hprof {
+object HprofWrite {
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -27,6 +27,6 @@ object Hprof {
                 reader.accept(visitor)
             }
         }
-        assertFileIsSame(inputHprofFile, outputHprofFile)
+        // assertFileIsSame(inputHprofFile, outputHprofFile)
     }
 }

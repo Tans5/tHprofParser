@@ -1,6 +1,6 @@
 package com.tans.thprofparser.records.subrecorders
 
-enum class SubRecorderType(val tag: Int) {
+enum class SubRecordType(val tag: Int) {
     ROOT_UNKNOWN(0xff),
     ROOT_JNI_GLOBAL(0x01),
     ROOT_JNI_LOCAL(0x02),

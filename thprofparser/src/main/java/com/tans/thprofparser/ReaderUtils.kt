@@ -69,7 +69,7 @@ fun BufferedSource.readDouble(): Double {
 fun BufferedSource.readValue(type: Int, header: HprofHeader): ValueHolder {
     return when (type) {
         REFERENCE_HPROF_TYPE -> {
-            ValueHolder.ReferenceHolder(readId(header))
+            ValueHolder.ReferenceHolder(readId(header), header.identifierByteSize)
         }
         PrimitiveType.BOOLEAN.hprofType -> {
             ValueHolder.BooleanHolder(readBoolean())
