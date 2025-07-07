@@ -31,7 +31,7 @@ class HprofWriter(outputStream: OutputStream) : HprofVisitor() {
     }
 
     override fun visitStackFrameRecord(context: RecordContext<Record.StackFrameRecord>) {
-        sink.writeStackFrameClassRecord(context.record, context.header)
+        sink.writeStackFrameRecord(context.record, context.header)
     }
 
     override fun visitStackTraceRecord(context: RecordContext<Record.StackTraceRecord>) {
@@ -53,6 +53,10 @@ class HprofWriter(outputStream: OutputStream) : HprofVisitor() {
 
     override fun visitEnd() {
         sink.writeEndRecord()
+    }
+
+    fun flush() {
+        sink.flush()
     }
 
     companion object {
@@ -95,7 +99,7 @@ class HprofWriter(outputStream: OutputStream) : HprofVisitor() {
             }
         }
 
-        fun BufferedSink.writeStackFrameClassRecord(record: Record.StackFrameRecord, header: HprofHeader) {
+        fun BufferedSink.writeStackFrameRecord(record: Record.StackFrameRecord, header: HprofHeader) {
             writeRecordHeader(record, header)
             record.apply {
                 writeId(id, header)

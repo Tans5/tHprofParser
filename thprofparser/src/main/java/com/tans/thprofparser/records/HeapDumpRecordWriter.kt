@@ -121,6 +121,10 @@ class HeapDumpRecordWriter(
         }
     }
 
+    fun flush() {
+        subSink.flush()
+    }
+
     companion object {
 
         fun BufferedSink.writeRootUnknownSubRecord(record: SubRecord.RootUnknownSubRecord, header: HprofHeader) {
@@ -144,6 +148,8 @@ class HeapDumpRecordWriter(
             record.apply {
                 writeUnsignedByte(subTag)
                 writeId(id, header)
+                writeUnsignedInt(threadSerialNumber)
+                writeUnsignedInt(frameNumber)
             }
         }
 

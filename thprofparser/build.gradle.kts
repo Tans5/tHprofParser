@@ -13,7 +13,5 @@ kotlin {
 }
 
 dependencies {
-    implementation(libs.asm)
-    implementation(libs.asm.commons)
-    implementation(libs.okio)
+    api(libs.okio)
 }

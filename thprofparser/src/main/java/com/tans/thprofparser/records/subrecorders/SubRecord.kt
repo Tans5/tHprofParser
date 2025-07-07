@@ -198,10 +198,10 @@ sealed class SubRecord {
             val idSize = header.identifierByteSize.toLong()
             var bodyLen = idSize * 7 + 4 * 2 + 2 * 3
             for (f in constFields) {
-                bodyLen += f.value.size + 4
+                bodyLen += f.value.size + 4 + 1
             }
             for (f in staticFields) {
-                bodyLen += f.value.size + idSize
+                bodyLen += f.value.size + idSize + 1
             }
             bodyLen += memberFields.size * (idSize + 1)
             return bodyLen

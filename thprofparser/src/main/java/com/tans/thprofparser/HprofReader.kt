@@ -64,12 +64,12 @@ class HprofReader(inputStream: InputStream) {
                     break
                 }
                 else -> {
-                    val record = source.readUnknownRecord(null)
+                    val record = source.readUnknownRecord(tag)
                     hprofVisitor.visitUnknownRecord(RecordContext(header, offset, record))
                     offset += record.bodyLen
                 }
             }
-            offset += 5
+            offset += 9
         }
         hprofVisitor.visitEnd()
     }
@@ -82,7 +82,7 @@ class HprofReader(inputStream: InputStream) {
         val (_, timestamp, bodyLen) = source.readRecordCommonHeader(false)
         val heapDumpVisitor = hprofVisitor.visitHeapDumpRecord(tag, timestamp, header)
         val contentBytes = source.readByteArray(bodyLen)
-        var subRecordOffset: Long = 5
+        var subRecordOffset: Long = 9
         val subRecords = ArrayList<SubRecord>()
         ByteArrayInputStream(contentBytes).source().buffer().use { subSource ->
             while (!subSource.exhausted()) {
@@ -90,126 +90,126 @@ class HprofReader(inputStream: InputStream) {
                 when (subTag) {
                     SubRecordType.ROOT_UNKNOWN.tag -> {
                         val record = subSource.readRootUnknownSubRecord(false, header)
-                        heapDumpVisitor?.visitRootUnknownSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootUnknownSubRecord(SubRecordContext(header, tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
 
                     }
                     SubRecordType.ROOT_JNI_GLOBAL.tag -> {
                         val record = subSource.readRootJniGlobalSubRecord(false, header)
-                        heapDumpVisitor?.visitRootJniGlobalSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootJniGlobalSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_JNI_LOCAL.tag -> {
                         val record = subSource.readRootJniLocalSubRecord(false, header)
-                        heapDumpVisitor?.visitRootJniLocalSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootJniLocalSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_JAVA_FRAME.tag -> {
                         val record = subSource.readRootJavaFrameSubRecord(false, header)
-                        heapDumpVisitor?.visitRootJavaFrameSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootJavaFrameSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_NATIVE_STACK.tag -> {
                         val record = subSource.readRootNativeStackSubRecord(false, header)
-                        heapDumpVisitor?.visitRootNativeStackSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootNativeStackSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_STICKY_CLASS.tag -> {
                         val record = subSource.readRootStickyClassSubRecord(false, header)
-                        heapDumpVisitor?.visitRootStickyClassSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootStickyClassSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_THREAD_BLOCK.tag -> {
                         val record = subSource.readRootThreadBlockSubRecord(false, header)
-                        heapDumpVisitor?.visitRootThreadBlockSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootThreadBlockSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_MONITOR_USED.tag -> {
                         val record = subSource.readRootMonitorUsedRecord(false, header)
-                        heapDumpVisitor?.visitRootMonitorUsedSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootMonitorUsedSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_THREAD_OBJECT.tag -> {
                         val record = subSource.readRootThreadObjectSubRecord(false, header)
-                        heapDumpVisitor?.visitRootThreadObjectSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootThreadObjectSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_INTERNED_STRING.tag -> {
                         val record = subSource.readRootInternedStringRecord(false, header)
-                        heapDumpVisitor?.visitRootInternedStringSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootInternedStringSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_FINALIZING.tag -> {
                         val record = subSource.readRootFinalizingSubRecord(false, header)
-                        heapDumpVisitor?.visitRootFinalizingSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootFinalizingSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_DEBUGGER.tag -> {
                         val record = subSource.readRootDebuggerSubRecord(false, header)
-                        heapDumpVisitor?.visitRootDebuggerSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootDebuggerSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_REFERENCE_CLEANUP.tag -> {
                         val record = subSource.readRootReferenceCleanSubRecord(false, header)
-                        heapDumpVisitor?.visitRootReferenceCleanupSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootReferenceCleanupSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_VM_INTERNAL.tag -> {
                         val record = subSource.readRootVmInternalSubRecord(false, header)
-                        heapDumpVisitor?.visitRootVmInternalSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootVmInternalSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_JNI_MONITOR.tag -> {
                         val record = subSource.readRootJniMonitorSubRecord(false, header)
-                        heapDumpVisitor?.visitRootJniMonitorSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootJniMonitorSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
                     SubRecordType.ROOT_UNREACHABLE.tag -> {
                         val record = subSource.readRootUnreachableSubRecord(false, header)
-                        heapDumpVisitor?.visitRootUnreachableSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitRootUnreachableSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
 
                     SubRecordType.CLASS_DUMP.tag -> {
                         val record = subSource.readClassDumpSubRecord(false, header)
-                        heapDumpVisitor?.visitClassDumpSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitClassDumpSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
 
                     SubRecordType.INSTANCE_DUMP.tag -> {
                         val record = subSource.readInstanceDumpSubRecord(false, header)
-                        heapDumpVisitor?.visitInstanceDumpSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitInstanceDumpSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
 
                     SubRecordType.OBJECT_ARRAY_DUMP.tag -> {
                         val record = subSource.readObjectArrayDumpSubRecord(false, header)
-                        heapDumpVisitor?.visitObjectArrayDumpSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitObjectArrayDumpSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
 
                     SubRecordType.PRIMITIVE_ARRAY_DUMP.tag -> {
                         val record = subSource.readPrimitiveArrayDumpSubRecord(false, header)
-                        heapDumpVisitor?.visitPrimitiveArrayDumpSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitPrimitiveArrayDumpSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
@@ -217,7 +217,7 @@ class HprofReader(inputStream: InputStream) {
 
                     SubRecordType.HEAP_DUMP_INFO.tag -> {
                         val record = subSource.readHeapInfoSubRecord(false, header)
-                        heapDumpVisitor?.visitHeapDumpInfoSubRecord(SubRecordContext(tag, offset, offset + subRecordOffset, bodyLen, record))
+                        heapDumpVisitor?.visitHeapDumpInfoSubRecord(SubRecordContext(header,tag, offset, offset + subRecordOffset, bodyLen, record))
                         subRecords.add(record)
                         subRecordOffset += record.calculateBodyLen(header)
                     }
@@ -257,7 +257,7 @@ class HprofReader(inputStream: InputStream) {
                 version = version,
                 identifierByteSize = identifierBytesSize,
                 heapDumpTimestamp = heapDumpTimestamp,
-                len = endOfVersionStrIndex + 4 + 8
+                len = endOfVersionStrIndex + 1 + 4 + 8
             )
         }
 
