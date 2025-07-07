@@ -231,23 +231,33 @@ object HprofWriteTest {
                         }
 
                         override fun visitHeapDumpInfoSubRecord(context: SubRecordContext<SubRecord.HeapDumpInfoSubRecord>) {
-
+                            subRecordTest(context, "HeapDumpInfoSubRecord") { sink ->
+                                sink.writeHeapDumpInfoSubRecord(context.subRecord, context.header)
+                            }
                         }
 
                         override fun visitClassDumpSubRecord(context: SubRecordContext<SubRecord.ClassDumpSubRecord>) {
-
+                            subRecordTest(context, "ClassDumpSubRecord") { sink ->
+                                sink.writeClassDumpSubRecord(context.subRecord, context.header)
+                            }
                         }
 
                         override fun visitInstanceDumpSubRecord(context: SubRecordContext<SubRecord.InstanceDumpSubRecord>) {
-
+                            subRecordTest(context, "InstanceDumpSubRecord") { sink ->
+                                sink.writeInstanceDumpSubRecord(context.subRecord, context.header)
+                            }
                         }
 
                         override fun visitPrimitiveArrayDumpSubRecord(context: SubRecordContext<SubRecord.PrimitiveArrayDumpSubRecord>) {
-
+                            subRecordTest(context, "PrimitiveArrayDumpSubRecord") { sink ->
+                                sink.writePrimitiveArrayDumpSubRecord(context.subRecord, context.header)
+                            }
                         }
 
                         override fun visitObjectArrayDumpSubRecord(context: SubRecordContext<SubRecord.ObjectArrayDumpSubRecord>) {
-
+                            subRecordTest(context, "ObjectArrayDumpSubRecord") { sink ->
+                                sink.writeObjectArrayDumpSubRecord(context.subRecord, context.header)
+                            }
                         }
                     }
                 }

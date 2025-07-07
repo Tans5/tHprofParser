@@ -55,7 +55,8 @@ fun BufferedSource.readString(
 }
 
 fun BufferedSource.readChar(): Char {
-    return readString(2, Charsets.UTF_16BE)[0]
+    return readUnsignedShort().toChar()
+    // return readString(2, Charsets.UTF_16BE)[0]
 }
 
 fun BufferedSource.readFloat(): Float {

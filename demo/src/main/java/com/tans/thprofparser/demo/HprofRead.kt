@@ -7,7 +7,7 @@ import java.io.File
 object HprofRead {
     @JvmStatic
     fun main(args: Array<String>) {
-        val inputHprofFile = File("./demo/output/output.hprof")
+        val inputHprofFile = File("./demo/input/dump.hprof")
         inputHprofFile.inputStream().use { inputStream ->
             val reader = HprofReader(inputStream)
             val visitor = object : HprofVisitor() {
