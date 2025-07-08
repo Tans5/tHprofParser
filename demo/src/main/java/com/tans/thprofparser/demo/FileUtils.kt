@@ -54,3 +54,27 @@ fun assertIsSame(bytes1: ByteArray, bytes2: ByteArray, msg: String? = null) {
         println("Check $msg success.")
     }
 }
+
+fun Long.toSizeString(): String {
+    if (this < 0L) {
+        return ""
+    }
+    return when (this) {
+        in 0 until 1024 -> {
+            "$this B"
+        }
+        in 1024 until 1024 * 1024 -> {
+            "${String.format("%.02f", this.toDouble() / 1024)} KB"
+        }
+        in 1024 * 1024 until 1024 * 1024 * 1024 -> {
+            "${String.format("%.02f", this.toDouble() / (1024 * 1024))} MB"
+        }
+        else -> {
+            "${String.format("%.02f", this.toDouble() / (1024 * 1024 * 1024))} GB"
+        }
+    }
+}
+
+fun Double.toPercentsString(): String {
+    return "${String.format("%.02f", this * 100.0)} %"
+}
