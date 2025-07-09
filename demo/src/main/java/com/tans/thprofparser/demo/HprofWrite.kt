@@ -27,6 +27,5 @@ object HprofWrite {
                 reader.accept(visitor)
             }
         }
-        // assertFileIsSame(inputHprofFile, outputHprofFile)
     }
 }

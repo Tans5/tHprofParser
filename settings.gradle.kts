@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "tHprofParser"
 include(":thprofparser")
 include(":demo")
+include(":thprofparser-reducer")

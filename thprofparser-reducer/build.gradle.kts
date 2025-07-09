@@ -13,6 +13,5 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":thprofparser"))
-    implementation(project(":thprofparser-reducer"))
+    api(project(":thprofparser"))
 }
