@@ -8,7 +8,7 @@ object HprofReducer {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val inputHprofFile = File("./demo/input/dump1.hprof")
+        val inputHprofFile = File("./demo/input/dump.hprof")
         val outputReducedFile = File("./demo/output/reduced.zip")
         val cost = measureTime {
             reduceHprofFile(inputHprofFile, outputReducedFile)

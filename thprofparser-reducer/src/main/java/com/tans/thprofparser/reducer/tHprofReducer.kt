@@ -240,7 +240,7 @@ fun reduceHprofFile(
         }
         zipFiles(inputFiles = listOf(reducedFile), outputStream)
     } finally {
-        // reducedFile.delete()
+        reducedFile.delete()
     }
 }
 

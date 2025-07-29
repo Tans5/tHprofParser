@@ -1,7 +1,7 @@
 [versions]
-jetbrainsKotlinJvm = "2.0.21"
+jetbrainsKotlinJvm = "2.2.0"
 asm = "9.6"
-okio = "3.14.0"
+okio = "3.15.0"
 
 [libraries]
 asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
