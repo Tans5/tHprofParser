@@ -16,6 +16,7 @@ kotlin {
 
 dependencies {
     api(project(":thprofparser"))
+    // implementation(libs.thprofparser)
 }
 
 

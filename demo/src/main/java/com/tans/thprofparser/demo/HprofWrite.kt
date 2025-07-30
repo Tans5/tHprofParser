@@ -1,9 +1,16 @@
 package com.tans.thprofparser.demo
 
 
+import com.tans.thprofparser.HprofHeader
 import com.tans.thprofparser.HprofReader
 import com.tans.thprofparser.HprofVisitor
 import com.tans.thprofparser.HprofWriter
+import com.tans.thprofparser.records.HeapDumpRecordVisitor
+import com.tans.thprofparser.records.HeapDumpRecordWriter
+import com.tans.thprofparser.records.Record
+import com.tans.thprofparser.records.RecordContext
+import com.tans.thprofparser.records.subrecorders.SubRecord
+import com.tans.thprofparser.records.subrecorders.SubRecordContext
 import java.io.File
 
 object HprofWrite {

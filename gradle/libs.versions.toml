@@ -2,11 +2,14 @@
 jetbrainsKotlinJvm = "2.2.0"
 asm = "9.6"
 okio = "3.15.0"
+thprofparser = "1.0.0"
 
 [libraries]
 asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
 asm-commons = { group = "org.ow2.asm", name = "asm-commons", version.ref = "asm" }
 okio = {group = "com.squareup.okio", name = "okio", version.ref = "okio"}
+thprofparser = { group = "io.github.tans5", name = "thprofparser", version.ref = "thprofparser" }
+thprofparser-reducer = { group = "io.github.tans5", name = "thprofparser-reducer", version.ref = "thprofparser" }
 
 [plugins]
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
