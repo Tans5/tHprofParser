@@ -7,6 +7,7 @@ import com.tans.thprofparser.HprofReader
 import com.tans.thprofparser.HprofVisitor
 import com.tans.thprofparser.HprofWriter
 import com.tans.thprofparser.MemberField
+import com.tans.thprofparser.REFERENCE_HPROF_TYPE
 import com.tans.thprofparser.StaticField
 import com.tans.thprofparser.ValueHolder
 import com.tans.thprofparser.readValue
@@ -34,7 +35,9 @@ fun reduceHprofFile(
     reduceConstField: (className: String?, constField: ConstField) -> Boolean = { _, _ -> true },
     reduceStaticField: (className: String?, fieldName: String?, staticField: StaticField) -> Boolean = { _, _, _ -> true },
     reducePrimitiveArray: (primitiveArrayDumpSubRecord: SubRecord.PrimitiveArrayDumpSubRecord) -> Boolean = { _ -> true},
-    reduceInstanceField: (className: String?, memberFieldName: String?, classDump: SubRecord.ClassDumpSubRecord, memberField: MemberField, instance: SubRecord.InstanceDumpSubRecord) -> Boolean = { _, _, _, _, _ -> true}
+    reduceInstanceField: (className: String?, memberFieldName: String?, classDump: SubRecord.ClassDumpSubRecord, memberField: MemberField, instance: SubRecord.InstanceDumpSubRecord) -> Boolean = { _, _, _, _, _ -> true },
+    reduceClassFieldNameString: (className: String?, classDump: SubRecord.ClassDumpSubRecord) -> Boolean = { _, _ -> false },
+    deleteReducedField: Boolean = false
 ): File {
     val dir = inputFile.canonicalFile.parentFile
     val outputFile = File(dir, "${inputFile.nameWithoutExtension}.zip")
@@ -51,7 +54,9 @@ fun reduceHprofFile(
             reduceConstField,
             reduceStaticField,
             reducePrimitiveArray,
-            reduceInstanceField
+            reduceInstanceField,
+            reduceClassFieldNameString,
+            deleteReducedField
         )
     } catch (e: Throwable) {
         outputFile.delete()
@@ -69,7 +74,9 @@ fun reduceHprofFile(
     reduceConstField: (className: String?, constField: ConstField) -> Boolean = { _, _ -> true },
     reduceStaticField: (className: String?, fieldName: String?, staticField: StaticField) -> Boolean = { _, _, _ -> true },
     reducePrimitiveArray: (primitiveArrayDumpSubRecord: SubRecord.PrimitiveArrayDumpSubRecord) -> Boolean = { _ -> true},
-    reduceInstanceField: (className: String?, memberFieldName: String?, classDump: SubRecord.ClassDumpSubRecord, memberField: MemberField, instance: SubRecord.InstanceDumpSubRecord) -> Boolean = { _, _, _, _, _ -> true}
+    reduceInstanceField: (className: String?, memberFieldName: String?, classDump: SubRecord.ClassDumpSubRecord, memberField: MemberField, instance: SubRecord.InstanceDumpSubRecord) -> Boolean = { _, _, _, _, _ -> true },
+    reduceClassFieldNameString: (className: String?, classDump: SubRecord.ClassDumpSubRecord) -> Boolean = { _, _ -> false },
+    deleteReducedField: Boolean = false
 ) {
     if (!outputFile.exists()) {
         outputFile.createNewFile()
@@ -84,7 +91,9 @@ fun reduceHprofFile(
                 reduceConstField,
                 reduceStaticField,
                 reducePrimitiveArray,
-                reduceInstanceField
+                reduceInstanceField,
+                reduceClassFieldNameString,
+                deleteReducedField
             )
         }
     } catch (e: Throwable) {
@@ -101,7 +110,9 @@ fun reduceHprofFile(
     reduceConstField: (className: String?, constField: ConstField) -> Boolean = { _, _ -> true },
     reduceStaticField: (className: String?, fieldName: String?, staticField: StaticField) -> Boolean = { _, _, _ -> true },
     reducePrimitiveArray: (primitiveArrayDumpSubRecord: SubRecord.PrimitiveArrayDumpSubRecord) -> Boolean = { _ -> true},
-    reduceInstanceField: (className: String?, memberFieldName: String?, classDump: SubRecord.ClassDumpSubRecord, memberField: MemberField, instance: SubRecord.InstanceDumpSubRecord) -> Boolean = { _, _, _, _, _ -> true}
+    reduceInstanceField: (className: String?, memberFieldName: String?, classDump: SubRecord.ClassDumpSubRecord, memberField: MemberField, instance: SubRecord.InstanceDumpSubRecord) -> Boolean = { _, _, _, _, _ -> true },
+    reduceClassFieldNameString: (className: String?, classDump: SubRecord.ClassDumpSubRecord) -> Boolean = { _, _ -> false },
+    deleteReducedField: Boolean = false
 ) {
     if (!inputFile.canRead()) {
         throw HprofParserException("${inputFile.canonicalPath} can't read.")
@@ -114,6 +125,8 @@ fun reduceHprofFile(
     val loadClassMap: HashMap<Long, Record.LoadClassRecord> = HashMap()
     val classDumpMap: HashMap<Long, SubRecord.ClassDumpSubRecord> = HashMap()
 
+    val keepStringIds: HashSet<Long> = HashSet()
+
     inputFile.inputStream().use { inputStream ->
         val reader = HprofReader(inputStream)
         reader.accept(object : HprofVisitor(preScanVisitor) {
@@ -123,7 +136,15 @@ fun reduceHprofFile(
             }
 
             override fun visitLoadClassRecord(context: RecordContext<Record.LoadClassRecord>) {
+                keepStringIds.add(context.record.classNameStringId)
                 loadClassMap[context.record.id] = context.record
+            }
+
+            override fun visitStackFrameRecord(context: RecordContext<Record.StackFrameRecord>) {
+                val record = context.record
+                keepStringIds.add(record.methodNameStringId)
+                keepStringIds.add(record.methodSignatureStringId)
+                keepStringIds.add(record.sourceFileNameStringId)
             }
 
             override fun visitHeapDumpRecord(
@@ -132,8 +153,28 @@ fun reduceHprofFile(
                 header: HprofHeader
             ): HeapDumpRecordVisitor? {
                 return object : HeapDumpRecordVisitor(tag, timestamp, header) {
+
+                    override fun visitHeapDumpInfoSubRecord(context: SubRecordContext<SubRecord.HeapDumpInfoSubRecord>) {
+                        keepStringIds.add(context.subRecord.stringId)
+                    }
+
                     override fun visitClassDumpSubRecord(context: SubRecordContext<SubRecord.ClassDumpSubRecord>) {
-                        classDumpMap[context.subRecord.id] = context.subRecord
+                        val record = context.subRecord
+                        classDumpMap[record.id] = record
+                        val className = loadClassMap[record.id]?.classNameStringId?.let {
+                            stringMap[it]?.string
+                        }
+                        val reduceFieldName = reduceClassFieldNameString(className, record)
+                        for (staticField in record.staticFields) {
+                            if (staticField.value is ValueHolder.ReferenceHolder || !reduceFieldName) {
+                                keepStringIds.add(staticField.fieldNameStrId)
+                            }
+                        }
+                        for (memberField in record.memberFields) {
+                            if (memberField.type == REFERENCE_HPROF_TYPE || !reduceFieldName) {
+                                keepStringIds.add(memberField.fieldNameStrId)
+                            }
+                        }
                     }
                 }
             }
@@ -156,6 +197,14 @@ fun reduceHprofFile(
                 val reader = HprofReader(inputStream)
                 val writer = HprofWriter(outputStream)
                 reader.accept(object : HprofVisitor(writer) {
+                    override fun visitStringRecord(context: RecordContext<Record.StringRecord>) {
+                        if (keepStringIds.remove(context.record.id)) {
+                            super.visitStringRecord(context)
+                        } else {
+                            println(context.record.string)
+                        }
+                    }
+
                     override fun visitHeapDumpRecord(
                         tag: Int,
                         timestamp: Long,
@@ -167,24 +216,43 @@ fun reduceHprofFile(
                                 val record = context.subRecord
                                 val constFields = record.constFields
                                 val staticFields = record.staticFields
+                                val memberField = record.memberFields
                                 val className = stringMap[loadClassMap[record.id]?.classNameStringId]?.string
                                 super.visitClassDumpSubRecord(
                                     context.copy(
                                         subRecord = context.subRecord.copy(
-                                            constFields = constFields.map {
+                                            constFields = constFields.mapNotNull {
                                                 if (it.value !is ValueHolder.ReferenceHolder && reduceConstField(className, it)) {
-                                                    it.copy(value = it.value.setPrimitiveValueToZero())
+                                                    if (deleteReducedField) {
+                                                        null
+                                                    } else {
+                                                        it.copy(value = it.value.setPrimitiveValueToZero())
+                                                    }
                                                 } else {
                                                     it
                                                 }
                                             },
-                                            staticFields = staticFields.map {
+                                            staticFields = staticFields.mapNotNull {
                                                 if (it.value !is ValueHolder.ReferenceHolder && reduceStaticField(className, stringMap[it.fieldNameStrId]?.string, it)) {
-                                                    it.copy(value = it.value.setPrimitiveValueToZero())
+                                                    if (deleteReducedField) {
+                                                        null
+                                                    } else {
+                                                        it.copy(value = it.value.setPrimitiveValueToZero())
+                                                    }
                                                 } else {
                                                     it
                                                 }
-                                                it
+                                            },
+                                            memberFields = memberField.mapNotNull {
+                                                if (it.type != REFERENCE_HPROF_TYPE) {
+                                                    if (deleteReducedField) {
+                                                        null
+                                                    } else {
+                                                        it
+                                                    }
+                                                } else {
+                                                    it
+                                                }
                                             }
                                         )
                                     )
@@ -223,7 +291,9 @@ fun reduceHprofFile(
                                         for (field in memberFields) {
                                             val value = source.readValue(field.type, header)
                                             if (value !is ValueHolder.ReferenceHolder && reduceInstanceField(className, stringMap[field.fieldNameStrId]?.string, classDump, field, record)) {
-                                                sink.writeValue(value.setPrimitiveValueToZero(), header, false)
+                                                if (!deleteReducedField) {
+                                                    sink.writeValue(value.setPrimitiveValueToZero(), header, false)
+                                                }
                                             } else {
                                                 sink.writeValue(value, header, false)
                                             }

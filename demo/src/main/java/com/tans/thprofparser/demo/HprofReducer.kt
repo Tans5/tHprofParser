@@ -11,7 +11,10 @@ object HprofReducer {
         val inputHprofFile = File("./demo/input/dump.hprof")
         val outputReducedFile = File("./demo/output/reduced.zip")
         val cost = measureTime {
-            reduceHprofFile(inputHprofFile, outputReducedFile)
+            reduceHprofFile(
+                inputFile = inputHprofFile,
+                outputFile = outputReducedFile
+            )
         }
         println("Reduce profile cost: $cost")
     }
